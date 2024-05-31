@@ -1,0 +1,183 @@
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <ctime>
+#include <memory>
+
+const int TABLE_SIZE = 10;
+
+class Cow {
+public:
+    std::string name;
+
+    Cow(const std::string& name) : name(name) {}
+    ~Cow() {
+        std::cout << "Cow " << name << " has been destroyed.\n";
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Cow& cow) {
+        os << "Cow Name: " << cow.name;
+        return os;
+    }
+
+    static int hash(const std::string& name) {
+        int hashValue = 0;
+        for (char ch : name) {
+            hashValue = (hashValue * 31 + ch) % TABLE_SIZE;
+        }
+        return hashValue;
+    }
+};
+
+class Ship {
+public:
+    std::string shipName;
+    Cow* cowInventory[TABLE_SIZE];
+    int numCows;
+
+    Ship(const std::string& shipName) : shipName(shipName), numCows(0) {
+        for (int i = 0; i < TABLE_SIZE; ++i) {
+            cowInventory[i] = nullptr;
+        }
+    }
+
+    ~Ship() {
+        for (int i = 0; i < TABLE_SIZE; ++i) {
+            if (cowInventory[i] != nullptr) {
+                delete cowInventory[i];
+            }
+        }
+        std::cout << "Ship " << shipName << " has been destroyed, along with its cows.\n";
+    }
+
+    void abductCow(Cow* cow) {
+        int index = Cow::hash(cow->name);
+        if (cowInventory[index] != nullptr && cowInventory[index]->name == cow->name) {
+            std::cout << "Error: Cow with name " << cow->name << " is already on the ship.\n";
+            delete cow;
+        } else {
+            cowInventory[index] = cow;
+            numCows++;
+            std::cout << "Cow " << cow->name << " has been abducted.\n";
+        }
+    }
+
+    void dropOffCow() {
+        if (numCows == 0) {
+            std::cout << "No cows to drop off.\n";
+            return;
+        }
+        int index;
+        do {
+            index = rand() % TABLE_SIZE;
+        } while (cowInventory[index] == nullptr);
+        
+        std::cout << "Dropping off cow: " << cowInventory[index]->name << "\n";
+        delete cowInventory[index];
+        cowInventory[index] = nullptr;
+        numCows--;
+    }
+
+    void dropOffCow(const std::string& cowID) {
+        int index = Cow::hash(cowID);
+        if (cowInventory[index] != nullptr && cowInventory[index]->name == cowID) {
+            std::cout << "Dropping off cow: " << cowInventory[index]->name << "\n";
+            delete cowInventory[index];
+            cowInventory[index] = nullptr;
+            numCows--;
+        } else {
+            std::cout << "Error: Cow with name " << cowID << " not found on the ship.\n";
+        }
+    }
+
+    void displayInventory() const {
+        bool empty = true;
+        for (int i = 0; i < TABLE_SIZE; ++i) {
+            if (cowInventory[i] != nullptr) {
+                std::cout << *(cowInventory[i]) << "\n";
+                empty = false;
+            }
+        }
+        if (empty) {
+            std::cout << "No cows on the ship.\n";
+        }
+    }
+};
+
+void blowUpShip(Ship* ship) {
+    delete ship;
+}
+
+int main() {
+    std::unique_ptr<Ship> ship = nullptr;
+    int choice;
+    srand(static_cast<unsigned int>(time(0)));
+
+    do {
+        std::cout << "1. Create a ship\n";
+        std::cout << "2. Abduct a cow\n";
+        std::cout << "3. Drop off a cow\n";
+        std::cout << "4. Display inventory\n";
+        std::cout << "5. Self-destruct\n";
+        std::cout << "6. Quit\n";
+        std::cout << "Enter your choice: ";
+        std::cin >> choice;
+
+        switch (choice) {
+            case 1:
+                if (ship != nullptr) {
+                    std::cout << "A ship already exists. Destroy it before creating a new one.\n";
+                } else {
+                    std::string shipName;
+                    std::cout << "Enter ship name: ";
+                    std::cin >> shipName;
+                    ship = std::make_unique<Ship>(shipName);
+                    std::cout << "Ship " << shipName << " has been created.\n";
+                }
+                break;
+
+            case 2:
+                if (ship == nullptr) {
+                    std::cout << "No ship exists. Create a ship first.\n";
+                } else {
+                    std::string cowName;
+                    std::cout << "Enter cow name: ";
+                    std::cin >> cowName;
+                    ship->abductCow(new Cow(cowName));
+                }
+                break;
+
+            case 3:
+                if (ship == nullptr) {
+                    std::cout << "No ship exists. Create a ship first.\n";
+                } else {
+                    std::string cowName;
+                    std::cout << "Enter cow name to drop off (or press Enter for random drop off): ";
+                    std::cin.ignore();
+                    std::getline(std::cin, cowName);
+                    if (cowName.empty()) {
+                        ship->dropOffCow();
+                    } else {
+                        ship->dropOffCow(cowName);
+                    }
+                }
+                break;
+
+            case 4:
+                if (ship == nullptr) {
+                    std::cout << "No ship exists. Create a ship first.\n";
+                } else {
+                    ship->displayInventory();
+                }
+                break;
+
+            case 5:
+                if (ship == nullptr) {
+                    std::cout << "No ship exists to destroy.\n";
+                } else {
+                    blowUpShip(ship.release());
+                }
+                break;
+
+            case 6:
+                st
