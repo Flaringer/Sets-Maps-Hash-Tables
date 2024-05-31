@@ -71,7 +71,7 @@ public:
         do {
             index = rand() % TABLE_SIZE;
         } while (cowInventory[index] == nullptr);
-        
+
         std::cout << "Dropping off cow: " << cowInventory[index]->name << "\n";
         delete cowInventory[index];
         cowInventory[index] = nullptr;
@@ -180,4 +180,14 @@ int main() {
                 break;
 
             case 6:
-                st
+                            std::cout << "Goodbye!\n";
+                            break;
+
+                        default:
+                            std::cout << "Invalid choice. Please try again.\n";
+                            break;
+                    }
+                } while (choice != 6);
+
+                return 0;
+            }
